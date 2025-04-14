@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>역극 백업 채팅 HTML 코드 생성기</title>
+</head>
+<body style="background:#f0f0f0;padding:30px;font-family:'Apple SD Gothic Neo','Malgun Gothic','sans-serif';">
+
+  <h2>역극 백업 채팅 HTML 코드 생성기</h2>
+
+  <!-- 캐릭터 정보 입력 -->
+  <div style="background:#fff;padding:20px;border-radius:10px;max-width:700px;margin-bottom:20px;">
+    <h3>1. 캐릭터 정보 입력</h3>
+    <div>
+      <label>A 이름: <input id="name1" value="A" /></label><br><br>
+      <label>A 이미지 URL: <input id="img1" style="width:80%;" value="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FqN86F%2FbtsNk23fCFv%2FCeJOAkxk7KWqXEOKtUJrU1%2Fimg.jpg" /></label><br><br>
+      <label>A 말풍선 배경 색상: <input id="color1" value="#ffffff" /></label><br><br>
+      <label>A 텍스트 색상: <input id="textColor1" value="#000000" /></label>
+    </div>
+    <hr>
+    <div>
+      <label>B 이름: <input id="name2" value="B" /></label><br><br>
+      <label>B 이미지 URL: <input id="img2" style="width:80%;" value="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FqN86F%2FbtsNk23fCFv%2FCeJOAkxk7KWqXEOKtUJrU1%2Fimg.jpg" /></label><br><br>
+      <label>B 말풍선 배경 색상: <input id="color2" value="#2E64FE" /></label><br><br>
+      <label>B 텍스트 색상: <input id="textColor2" value="#ffffff" /></label>
+    </div>
+  </div>
+
+  <!-- 대사 입력 -->
+  <div style="background:#fff;padding:20px;border-radius:10px;max-width:700px;margin-bottom:20px;">
+    <h3>2. 대사 입력 (형식 -> 캐릭터이름: 대사)</h3>
+    <textarea id="dialogueInput" rows="10" style="width:100%;" placeholder="예시:
+A: 하나 둘 셋
+B: 내 페어명 부르면서 낙하
+A: 404 파이팅 (님들도 404 파이팅 이라고 한마디씩만 해주시길요)"></textarea>
+  </div>
+
+  <!-- 버튼 -->
+  <button onclick="generateFinalHTML()" style="padding:10px 20px;font-size:16px;">HTML 코드 생성</button>
+
+  <!-- 출력 -->
+  <h3>3. 생성된 HTML 코드</h3>
+  <textarea id="outputHTML" style="width:100%;height:400px;margin-top:10px;"></textarea>
+
+  <script>
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+      }[tag]));
+    }
+
+    function generateFinalHTML() {
+      const name1 = document.getElementById("name1").value.trim();
+      const img1 = document.getElementById("img1").value.trim();
+      const color1 = document.getElementById("color1").value.trim();
+      const textColor1 = document.getElementById("textColor1").value.trim();
+
+      const name2 = document.getElementById("name2").value.trim();
+      const img2 = document.getElementById("img2").value.trim();
+      const color2 = document.getElementById("color2").value.trim();
+      const textColor2 = document.getElementById("textColor2").value.trim();
+
+      const dialogueRaw = document.getElementById("dialogueInput").value.trim();
+      const lines = dialogueRaw.split("\n");
+
+      let htmlContent = `<head>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
+</head>
+<div style="font-family: 'Noto Sans KR', sans-serif; font-weight: 300;">\n`;
+
+      let currentSpeaker = "";
+      let currentImage = "";
+      let currentColor = "";
+      let currentTextColor = "";
+      let previousSpeaker = "";
+
+      lines.forEach(line => {
+        if (!line.trim()) return;
+
+        if (line.includes(":")) {
+          const [speakerRaw, ...messageParts] = line.split(":");
+          currentSpeaker = speakerRaw.trim();
+          currentImage = (currentSpeaker === name1) ? img1 : img2;
+          currentColor = (currentSpeaker === name1) ? color1 : color2;
+          currentTextColor = (currentSpeaker === name1) ? textColor1 : textColor2;
+          line = messageParts.join(":").trim();
+        }
+
+        const messages = line.split(/\\n|\n/);
+
+        messages.forEach(msg => {
+          if (!msg.trim()) return;
+
+          const isRight = (currentSpeaker === name2);
+          const alignStyle = isRight ? "row-reverse" : "row";
+          const textAlign = isRight ? "right" : "left";
+          const marginImg = isRight ? "margin-left:10px;" : "margin-right:10px;";
+          const showProfile = currentSpeaker !== previousSpeaker;
+
+          const styledMsg = escapeHTML(msg).replace(
+            /\((.*?)\)/g,
+            '<span style="opacity:0.6; font-style:italic;">($1)</span>'
+          );
+
+          htmlContent += `
+  <div style="display:flex;align-items:flex-start;flex-direction:${alignStyle};margin-bottom:5px;">`;
+
+          if (showProfile) {
+            htmlContent += `
+    <img src="${escapeHTML(currentImage)}" alt="${escapeHTML(currentSpeaker)}" style="width:40px;height:40px;border-radius:50%;${marginImg}">`;
+          } else {
+            htmlContent += `
+    <div style="width:40px;height:40px;${marginImg}"></div>`;
+          }
+
+          htmlContent += `
+    <div>`;
+
+          if (showProfile) {
+            htmlContent += `
+      <div style="font-size:12px;color:#555;text-align:${textAlign};margin-bottom:3px;">${escapeHTML(currentSpeaker)}</div>`;
+          }
+
+          htmlContent += `
+      <div style="font-size:13px;background:${currentColor};color:${currentTextColor};padding:10px 15px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);max-width:300px;margin-bottom:5px;">
+        ${styledMsg}
+      </div>
+    </div>
+  </div>\n`;
+
+          previousSpeaker = currentSpeaker;
+        });
+      });
+
+      htmlContent += `</div>`;
+      document.getElementById("outputHTML").value = htmlContent;
+    }
+  </script>
+
+</body>
+</html>
